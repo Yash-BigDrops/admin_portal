@@ -8,8 +8,10 @@ export function getPool(): Pool {
   const exists = globalThis.__adminPortalPool__;
   if (exists) return exists;
 
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL;
+  
   if (!url) {
+    console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('DATABASE') || key.includes('POSTGRES')));
     throw new Error('DATABASE_URL environment variable is required');
   }
 
