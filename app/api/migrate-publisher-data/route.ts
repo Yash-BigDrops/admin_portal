@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPool } from '@/lib/database/db';
+import { Pool } from 'pg';
 
-// Publisher database connection (you'll need to add this to your environment variables)
 const PUBLISHER_DB_URL = process.env.PUBLISHER_DATABASE_URL;
 
 export async function POST() {
@@ -14,8 +14,6 @@ export async function POST() {
       }, { status: 400 });
     }
 
-    // Connect to publisher database
-    const { Pool } = require('pg');
     const publisherPool = new Pool({
       connectionString: PUBLISHER_DB_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -29,7 +27,6 @@ export async function POST() {
     try {
       await adminClient.query('BEGIN');
       
-      // Get all publisher submissions from the publisher database
       const publisherData = await publisherClient.query(`
         SELECT 
           id,
@@ -56,7 +53,6 @@ export async function POST() {
       
       for (const submission of publisherData.rows) {
         try {
-          // Check if this submission already exists in admin database
           const existingCheck = await adminClient.query(
             'SELECT id FROM publisher_requests WHERE id = $1',
             [submission.id]
@@ -67,7 +63,6 @@ export async function POST() {
             continue;
           }
           
-          // Prepare submitted_data JSON
           const submittedData = {
             company_name: submission.company_name,
             first_name: submission.first_name,
