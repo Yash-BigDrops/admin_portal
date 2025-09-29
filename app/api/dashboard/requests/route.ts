@@ -3,6 +3,10 @@ import { getPool } from '@/lib/database/db';
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+
     const pool = getPool();
 
     const result = await pool.query(`
@@ -19,8 +23,8 @@ export async function GET(request: NextRequest) {
         created_at
       FROM publisher_requests
       ORDER BY created_at DESC
-      LIMIT 10
-    `);
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     const requests = result.rows.map(row => ({
       id: row.id,

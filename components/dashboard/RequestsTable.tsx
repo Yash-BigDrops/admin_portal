@@ -58,12 +58,14 @@ export function RequestsTable() {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         console.log('Fetching requests from API...');
-        const response = await fetch('/api/dashboard/requests?limit=10');
+        const limit = showAll ? 100 : 2; 
+        const response = await fetch(`/api/dashboard/requests?limit=${limit}`);
         if (response.ok) {
           const data: RequestsResponse = await response.json();
           console.log('API Response:', data);
@@ -80,7 +82,7 @@ export function RequestsTable() {
     };
 
     fetchRequests();
-  }, []);
+  }, [showAll]);
 
   const toggleRequestSelection = (requestId: string) => {
     setSelectedRequests(prev =>
@@ -148,7 +150,8 @@ export function RequestsTable() {
     setLoading(true);
     try {
       console.log('Refreshing requests data...');
-      const response = await fetch('/api/dashboard/requests?limit=10');
+      const limit = showAll ? 100 : 2;
+      const response = await fetch(`/api/dashboard/requests?limit=${limit}`);
       if (response.ok) {
         const data: RequestsResponse = await response.json();
         console.log('Refreshed data:', data);
@@ -161,6 +164,10 @@ export function RequestsTable() {
     }
   };
 
+  const handleViewAll = () => {
+    setShowAll(true);
+  };
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -168,6 +175,16 @@ export function RequestsTable() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg leading-6 font-medium text-gray-900">
             Incoming Publisher Requests
+            {!showAll && (
+              <span className="text-sm font-normal text-gray-500 ml-2">
+                (Latest 2)
+              </span>
+            )}
+            {showAll && (
+              <span className="text-sm font-normal text-gray-500 ml-2">
+                (All {requests.length} requests)
+              </span>
+            )}
           </h3>
           <div className="flex space-x-2">
             <button 
@@ -176,9 +193,22 @@ export function RequestsTable() {
             >
               Refresh
             </button>
-            <button className="text-sm text-indigo-600 hover:text-indigo-500">
-              View All
-            </button>
+            {!showAll && (
+              <button 
+                onClick={handleViewAll}
+                className="text-sm text-indigo-600 hover:text-indigo-500"
+              >
+                View All
+              </button>
+            )}
+            {showAll && (
+              <button 
+                onClick={() => setShowAll(false)}
+                className="text-sm text-indigo-600 hover:text-indigo-500"
+              >
+                Show Latest 2
+              </button>
+            )}
           </div>
         </div>
 
