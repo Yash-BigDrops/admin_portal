@@ -86,8 +86,8 @@ async function testDatabaseAndSetup() {
 
     console.log('\n🎉 Database setup completed successfully!');
     console.log('\nNext steps:');
-    console.log('1. Visit http://localhost:3000/api/test-db to test the API');
-    console.log('2. Visit http://localhost:3000/login to test the login page');
+    console.log('1. Visit https://admin.cms.bigdropsmarketing.com/api/test-db to test the API');
+    console.log('2. Visit https://admin.cms.bigdropsmarketing.com/login to test the login page');
     console.log('3. Use the super admin credentials to log in');
 
   } catch (error) {

@@ -40,6 +40,6 @@ export async function GET() {
     usage: 'Send a POST request to test webhook functionality',
     webhook_url: process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}/api/test-webhook`
-      : 'http://localhost:3000/api/test-webhook'
+      : 'https://admin.cms.bigdropsmarketing.com/api/test-webhook'
   });
 }

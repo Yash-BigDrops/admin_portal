@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const baseUrl = process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}` 
-    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    : process.env.NEXT_PUBLIC_APP_URL || 'https://admin.cms.bigdropsmarketing.com';
 
   return NextResponse.json({
     webhook_url: `${baseUrl}/api/webhooks/secure`,
