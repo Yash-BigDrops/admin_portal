@@ -46,8 +46,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Forward to Admin Portal webhook
-    const adminWebhookUrl = 'https://admin.cms.bigdropsmarketing.com/api/webhooks/secure';
-    const apiToken = 'f2a56c89e25d4b1f98920e1a64403db6e6a46935a861e7e67d3cfa4c8c7b2d';
+    const adminWebhookUrl = process.env.ADMIN_PORTAL_WEBHOOK_URL || 'https://admin.cms.bigdropsmarketing.com/api/webhooks/secure';
+    const apiToken = process.env.ADMIN_PORTAL_API_TOKEN;
+    
+    if (!apiToken) {
+      console.error('ADMIN_PORTAL_API_TOKEN environment variable not set');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Server configuration error' 
+      }, { status: 500 });
+    }
     
     console.log('Forwarding to admin webhook:', adminWebhookUrl);
     
