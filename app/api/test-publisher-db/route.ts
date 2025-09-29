@@ -50,7 +50,7 @@ export async function GET() {
         `);
         sampleData = sampleResult.rows;
       } catch (error) {
-        console.log('Publisher submissions table not found or error:', error.message);
+        console.log('Publisher submissions table not found or error:', error instanceof Error ? error.message : 'Unknown error');
       }
       
       return NextResponse.json({
