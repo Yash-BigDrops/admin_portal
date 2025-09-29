@@ -62,10 +62,15 @@ export function RequestsTable() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
+        console.log('Fetching requests from API...');
         const response = await fetch('/api/dashboard/requests?limit=10');
         if (response.ok) {
           const data: RequestsResponse = await response.json();
+          console.log('API Response:', data);
+          console.log('Number of requests:', data.requests.length);
           setRequests(data.requests);
+        } else {
+          console.error('API Response not OK:', response.status);
         }
       } catch (error) {
         console.error('Error fetching requests:', error);
@@ -139,6 +144,23 @@ export function RequestsTable() {
     setAdminNotes('');
   };
 
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      console.log('Refreshing requests data...');
+      const response = await fetch('/api/dashboard/requests?limit=10');
+      if (response.ok) {
+        const data: RequestsResponse = await response.json();
+        console.log('Refreshed data:', data);
+        setRequests(data.requests);
+      }
+    } catch (error) {
+      console.error('Error refreshing requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -147,9 +169,17 @@ export function RequestsTable() {
           <h3 className="text-lg leading-6 font-medium text-gray-900">
             Incoming Publisher Requests
           </h3>
-          <button className="text-sm text-indigo-600 hover:text-indigo-500">
-            View All
-          </button>
+          <div className="flex space-x-2">
+            <button 
+              onClick={refreshData}
+              className="text-sm text-indigo-600 hover:text-indigo-500"
+            >
+              Refresh
+            </button>
+            <button className="text-sm text-indigo-600 hover:text-indigo-500">
+              View All
+            </button>
+          </div>
         </div>
 
         {/* Table */}
