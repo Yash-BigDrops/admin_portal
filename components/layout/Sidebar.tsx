@@ -12,12 +12,10 @@ import {
   FileText,
   BarChart3,
   Brain,
-  LogOut,
   Menu,
   X,
   Target,
   Folder,
-  ChevronDown,
 } from 'lucide-react';
 
 interface NavigationItem {

@@ -32,7 +32,7 @@ export async function POST() {
     console.log(`📊 Found ${res.rows.length} submissions to migrate`);
 
     let migratedCount = 0;
-    let skippedCount = 0;
+    const skippedCount = 0;
     let errorCount = 0;
 
     for (const row of res.rows) {

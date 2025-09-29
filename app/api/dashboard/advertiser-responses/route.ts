@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const offerIds = [...new Set(result.rows.map(row => row.offer_id).filter(Boolean))];
     
-    let offerDetails: Record<string, any> = {};
+    let offerDetails: Record<string, { name?: string; description?: string; payout?: number; currency?: string }> = {};
     const everflowApiKey = process.env.EVERFLOW_API_KEY;
     
     if (everflowApiKey && offerIds.length > 0) {

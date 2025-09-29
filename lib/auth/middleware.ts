@@ -30,6 +30,13 @@ export function withAuth(
       // Verify token
       const payload = AuthService.verifyToken(token);
       
+      if (!payload) {
+        return NextResponse.json(
+          { error: 'Invalid token' },
+          { status: 401 }
+        );
+      }
+      
       // Check if user role is allowed
       if (requiredRoles && !requiredRoles.includes(payload.role)) {
         return NextResponse.json(
@@ -46,7 +53,7 @@ export function withAuth(
       };
 
       return handler(req);
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }

@@ -5,7 +5,6 @@ import type { User, UserRole } from '../../types/database';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 export interface AuthTokens {
   accessToken: string;
@@ -33,7 +32,7 @@ export class AuthService {
     };
 
     const accessToken = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
+      expiresIn: '24h',
       issuer: 'admin-portal',
       audience: 'admin-portal',
     });
@@ -47,31 +46,33 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: 24 * 60 * 60, // 24 hours in seconds
+      expiresIn: 24 * 60 * 60, 
     };
   }
 
   // Verify JWT token
-  static verifyToken(token: string): any {
+  static verifyToken(token: string): { userId: string; email: string; role: string } | null {
     try {
-      return jwt.verify(token, JWT_SECRET, {
+      const payload = jwt.verify(token, JWT_SECRET, {
         issuer: 'admin-portal',
         audience: 'admin-portal',
-      });
-    } catch (error) {
-      throw new Error('Invalid token');
+      }) as { userId: string; email: string; role: string };
+      return payload;
+    } catch {
+      return null;
     }
   }
 
   // Verify refresh token
-  static verifyRefreshToken(token: string): any {
+  static verifyRefreshToken(token: string): { userId: string; email: string; role: string } | null {
     try {
-      return jwt.verify(token, REFRESH_TOKEN_SECRET, {
+      const payload = jwt.verify(token, REFRESH_TOKEN_SECRET, {
         issuer: 'admin-portal',
         audience: 'admin-portal',
-      });
-    } catch (error) {
-      throw new Error('Invalid refresh token');
+      }) as { userId: string; email: string; role: string };
+      return payload;
+    } catch {
+      return null;
     }
   }
 

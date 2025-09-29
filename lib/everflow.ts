@@ -13,12 +13,12 @@ export async function getOfferDetails(offerId: string, apiKey: string) {
 }
 
 export async function getMultipleOffers(offerIds: string[], apiKey: string) {
-  const results: Record<string, any> = {};
+  const results: Record<string, { name?: string; description?: string; payout?: number; currency?: string }> = {};
   
   await Promise.all(
     offerIds.map(async (offerId) => {
       try {
-        const offer = await getOfferDetails(offerId, apiKey);
+        const offer = await getOfferDetails(offerId, apiKey) as { data: { name?: string; description?: string; payout?: number; currency?: string } };
         results[offerId] = offer.data;
       } catch (error) {
         console.error(`Failed to fetch offer ${offerId}:`, error);

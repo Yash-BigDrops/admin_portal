@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Eye, 
   CheckCircle, 
   XCircle, 
-  Clock,
-  MoreHorizontal 
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,7 +22,7 @@ interface RequestData {
   status: 'pending' | 'admin_approved' | 'admin_rejected' | 'approved' | 'rejected';
   publisherName: string;
   email: string;
-  submittedData: any;
+  submittedData: Record<string, unknown>;
 }
 
 interface RequestsResponse {

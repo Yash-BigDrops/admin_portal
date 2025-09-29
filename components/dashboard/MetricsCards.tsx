@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { 
   TrendingUp, 
-  TrendingDown, 
   Users, 
   FileText, 
   CheckCircle, 

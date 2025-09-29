@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/database/db';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { adminNotes, action } = await request.json();
-    const { id } = params;
+    const { id } = await params;
     const pool = getPool();
 
     if (!['approve', 'reject'].includes(action)) {
