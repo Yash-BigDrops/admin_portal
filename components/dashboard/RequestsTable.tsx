@@ -1,11 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RequestData {
@@ -17,6 +12,8 @@ interface RequestData {
   offerDescription: string;
   offerPayout: number | null;
   offerCurrency: string;
+  advertiserId: string;
+  advertiserName: string;
   type: string;
   priority: 'High Priority' | 'Moderate Priority' | 'Low Priority';
   status: 'pending' | 'admin_approved' | 'admin_rejected' | 'approved' | 'rejected';
@@ -30,29 +27,13 @@ interface RequestsResponse {
 }
 
 const priorityColors = {
-  'High Priority': 'text-red-700 bg-red-100',
-  'Moderate Priority': 'text-yellow-700 bg-yellow-100',
-  'Low Priority': 'text-green-700 bg-green-100'
+  'High Priority': 'text-red-700 bg-red-100 border-red-200',
+  'Moderate Priority': 'text-orange-700 bg-orange-100 border-orange-200',
+  'Low Priority': 'text-green-700 bg-green-100 border-green-200'
 };
 
-const statusIcons = {
-  pending: Clock,
-  admin_approved: CheckCircle,
-  admin_rejected: XCircle,
-  approved: CheckCircle,
-  rejected: XCircle
-};
-
-const statusColors = {
-  pending: 'text-yellow-600',
-  admin_approved: 'text-blue-600',
-  admin_rejected: 'text-red-600',
-  approved: 'text-green-600',
-  rejected: 'text-red-600'
-};
 
 export function RequestsTable() {
-  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [requests, setRequests] = useState<RequestData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -86,13 +67,6 @@ export function RequestsTable() {
     fetchRequests();
   }, [showAll]);
 
-  const toggleRequestSelection = (requestId: string) => {
-    setSelectedRequests(prev =>
-      prev.includes(requestId)
-        ? prev.filter(id => id !== requestId)
-        : [...prev, requestId]
-    );
-  };
 
   const handleApprovalClick = (request: RequestData, action: 'approve' | 'reject') => {
     setSelectedRequest(request);
@@ -148,238 +122,173 @@ export function RequestsTable() {
     setAdminNotes('');
   };
 
-  const refreshData = async () => {
-    setLoading(true);
-    try {
-      console.log('Refreshing requests data...');
-      const limit = showAll ? 100 : 2;
-      const response = await fetch(`/api/dashboard/requests?limit=${limit}`);
-      if (response.ok) {
-        const data: RequestsResponse = await response.json();
-        console.log('Refreshed data:', data);
-        setRequests(data.requests);
-      }
-    } catch (error) {
-      console.error('Error refreshing requests:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleViewAll = () => {
     setShowAll(true);
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Incoming Publisher Requests
-            {!showAll && (
-              <span className="text-sm font-normal text-gray-500 ml-2">
-                (Latest 2)
-              </span>
-            )}
-            {showAll && (
-              <span className="text-sm font-normal text-gray-500 ml-2">
-                (All {requests.length} requests)
-              </span>
-            )}
-          </h3>
-          <div className="flex space-x-2">
-            <button 
-              onClick={refreshData}
-              className="text-sm text-indigo-600 hover:text-indigo-500"
-            >
-              Refresh
-            </button>
-            {!showAll && (
-              <button 
-                onClick={handleViewAll}
-                className="text-sm text-indigo-600 hover:text-indigo-500"
-              >
-                View All
-              </button>
-            )}
-            {showAll && (
-              <button 
-                onClick={() => setShowAll(false)}
-                className="text-sm text-indigo-600 hover:text-indigo-500"
-              >
-                Show Latest 2
-              </button>
-            )}
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 border border-blue-200 rounded-xl shadow-xl">
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-blue-200 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+            <h3 className="text-xl font-bold text-white">
+              Incoming Publisher Requests
+            </h3>
           </div>
+          <button 
+            onClick={handleViewAll}
+            className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30"
+          >
+            View All
+          </button>
         </div>
+      </div>
 
-        {/* Table */}
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="relative w-12 px-6 sm:w-16 sm:px-8">
-                  <input
-                    type="checkbox"
-                    className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Company Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type & Priority
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-gray-300 rounded w-3/4 mx-auto"></div>
-                    </div>
-                  </td>
-                </tr>
-              ) : requests.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                    No requests found
-                  </td>
-                </tr>
-              ) : (
-                requests.map((request) => {
-                  const StatusIcon = statusIcons[request.status];
-                  return (
-                    <tr key={request.id} className={selectedRequests.includes(request.id) ? 'bg-gray-50' : undefined}>
-                      <td className="relative w-12 px-6 sm:w-16 sm:px-8">
-                        <input
-                          type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600"
-                          checked={selectedRequests.includes(request.id)}
-                          onChange={() => toggleRequestSelection(request.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {request.date} | {request.company}
-                          </div>
-                          <div className="text-sm font-semibold text-indigo-600">
-                            {request.offerName}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Publisher: {request.publisherName} | Email: {request.email}
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            Creative Type: {request.type} | Priority: {request.priority}
-                          </div>
-                          {request.offerPayout && (
-                            <div className="text-sm text-green-600 font-medium">
-                              Payout: {request.offerCurrency} {request.offerPayout}
-                            </div>
-                          )}
+      {/* Content */}
+      <div className="p-6">
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="border border-blue-200 rounded-xl p-6 bg-gradient-to-r from-blue-50 to-purple-50 animate-pulse">
+                <div className="h-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gradient-to-r from-blue-200 to-purple-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+            </div>
+            <p className="text-gray-600 text-lg">No requests found</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {requests.map((request, index) => (
+              <div key={request.id} className={`border-2 rounded-xl p-6 bg-gradient-to-br transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
+                index % 2 === 0 
+                  ? 'from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-300' 
+                  : 'from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300'
+              }`}>
+                <div className="flex justify-between items-start">
+                  {/* Left Content */}
+                  <div className="flex-1">
+                    <div className="space-y-3">
+                      {/* Date & Company */}
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${index % 2 === 0 ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
+                        <div className="text-sm font-semibold text-gray-800">
+                          {request.date} | {request.company} - SUB ID: {request.id.slice(-3)}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={cn(
-                          "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
-                          priorityColors[request.priority]
-                        )}>
+                      </div>
+                      
+                      {/* Offer Details */}
+                      <div className="text-sm text-gray-700 bg-white/60 rounded-lg p-3 border border-white/80">
+                        <span className="font-medium text-gray-600">Offer Id:</span> {request.offerId} | <span className="font-semibold text-gray-800">{request.offerName}</span>
+                      </div>
+                      
+                      {/* Client Information */}
+                      <div className="text-sm text-gray-700 bg-white/60 rounded-lg p-3 border border-white/80">
+                        <span className="font-medium text-gray-600">Client:</span> {request.advertiserId} | <span className="font-semibold text-gray-800">{request.advertiserName}</span>
+                      </div>
+                      
+                      {/* Creative Details & Priority */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-600">
+                          Creative type: <span className="font-medium text-gray-800">{request.type}</span> | Creative Count: 2 | From lines Count: 3 | Subject lines Count: 5
+                        </div>
+                        <span className={cn("px-3 py-1 rounded-full text-xs font-bold border-2", priorityColors[request.priority])}>
                           {request.priority}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <StatusIcon className={cn("h-4 w-4 mr-2", statusColors[request.status])} />
-                          <span className="text-sm text-gray-900 capitalize">{request.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <button className="text-indigo-600 hover:text-indigo-900 bg-indigo-100 px-3 py-1 rounded">
-                            View Request
-                          </button>
-                          {request.status === 'pending' && (
-                            <>
-                              <button 
-                                onClick={() => handleApprovalClick(request, 'approve')}
-                                className="text-green-600 hover:text-green-900 bg-green-100 px-3 py-1 rounded"
-                              >
-                                Approve
-                              </button>
-                              <button 
-                                onClick={() => handleApprovalClick(request, 'reject')}
-                                className="text-red-600 hover:text-red-900 bg-red-100 px-3 py-1 rounded"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {request.status === 'admin_approved' && (
-                            <span className="text-blue-600 text-sm">Admin Approved</span>
-                          )}
-                          {request.status === 'admin_rejected' && (
-                            <span className="text-red-600 text-sm">Admin Rejected</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Actions */}
+                  <div className="flex flex-col space-y-3 text-sm font-medium ml-6">
+                    <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                      View Request
+                    </button>
+                    {request.status === 'pending' && (
+                      <>
+                        <button 
+                          onClick={() => handleApprovalClick(request, 'approve')}
+                          className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                        >
+                          Approve and Forward
+                        </button>
+                        <button 
+                          onClick={() => handleApprovalClick(request, 'reject')}
+                          className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                        >
+                          Reject And Send back
+                        </button>
+                      </>
+                    )}
+                    {request.status === 'admin_approved' && (
+                      <span className="px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-lg border border-blue-300 text-center">
+                        Admin Approved
+                      </span>
+                    )}
+                    {request.status === 'admin_rejected' && (
+                      <span className="px-4 py-2 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-lg border border-red-300 text-center">
+                        Admin Rejected
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Approval Modal */}
       {showApprovalModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
+          <div className="relative top-20 mx-auto p-6 border-2 w-96 shadow-2xl rounded-xl bg-gradient-to-br from-white to-blue-50 border-blue-200">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {approvalAction === 'approve' ? 'Approve Request' : 'Reject Request'}
-              </h3>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className={`w-3 h-3 rounded-full ${approvalAction === 'approve' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <h3 className={`text-lg font-bold ${approvalAction === 'approve' ? 'text-green-800' : 'text-red-800'}`}>
+                  {approvalAction === 'approve' ? 'Approve Request' : 'Reject Request'}
+                </h3>
+              </div>
               
               {selectedRequest && (
-                <div className="mb-4 p-3 bg-gray-50 rounded">
-                  <p className="text-sm text-gray-600">
-                    <strong>Publisher:</strong> {selectedRequest.publisherName}
+                <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <span className="font-semibold text-blue-800">Publisher:</span> {selectedRequest.publisherName}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Company:</strong> {selectedRequest.company}
+                  <p className="text-sm text-gray-700 mb-2">
+                    <span className="font-semibold text-blue-800">Company:</span> {selectedRequest.company}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Offer ID:</strong> {selectedRequest.offerId}
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold text-blue-800">Offer ID:</span> {selectedRequest.offerId}
                   </p>
                 </div>
               )}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Admin Notes
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   rows={3}
                   placeholder="Add notes about this decision..."
                 />
               </div>
 
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-4">
                 <button
                   onClick={closeModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                  className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                   disabled={processing}
                 >
                   Cancel
@@ -387,10 +296,10 @@ export function RequestsTable() {
                 <button
                   onClick={handleApprovalSubmit}
                   disabled={processing}
-                  className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                  className={`px-6 py-3 text-sm font-semibold text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ${
                     approvalAction === 'approve'
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-red-600 hover:bg-red-700'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                      : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
                   } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {processing ? 'Processing...' : (approvalAction === 'approve' ? 'Approve' : 'Reject')}
