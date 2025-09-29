@@ -15,6 +15,10 @@ interface RequestData {
   date: string;
   company: string;
   offerId: string;
+  offerName: string;
+  offerDescription: string;
+  offerPayout: number | null;
+  offerCurrency: string;
   type: string;
   priority: 'High Priority' | 'Moderate Priority' | 'Low Priority';
   status: 'pending' | 'admin_approved' | 'admin_rejected' | 'approved' | 'rejected';
@@ -268,7 +272,10 @@ export function RequestsTable() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {request.date} | {request.company} - {request.offerId}
+                            {request.date} | {request.company}
+                          </div>
+                          <div className="text-sm font-semibold text-indigo-600">
+                            {request.offerName}
                           </div>
                           <div className="text-sm text-gray-500">
                             Publisher: {request.publisherName} | Email: {request.email}
@@ -276,6 +283,11 @@ export function RequestsTable() {
                           <div className="text-sm text-gray-500 mt-1">
                             Creative Type: {request.type} | Priority: {request.priority}
                           </div>
+                          {request.offerPayout && (
+                            <div className="text-sm text-green-600 font-medium">
+                              Payout: {request.offerCurrency} {request.offerPayout}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

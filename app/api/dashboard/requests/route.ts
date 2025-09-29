@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/database/db';
+import { getMultipleOffers } from '@/lib/everflow';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,23 +27,47 @@ export async function GET(request: NextRequest) {
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
 
-    const requests = result.rows.map(row => ({
-      id: row.id,
-      date: new Date(row.created_at).toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }),
-      company: row.company_name || 'N/A',
-      offerId: row.offer_id || 'N/A',
-      type: row.creative_type || 'N/A',
-      priority: row.priority === 'high' ? 'High Priority' : 
-                row.priority === 'medium' ? 'Moderate Priority' : 'Low Priority',
-      status: row.status,
-      publisherName: row.publisher_name,
-      email: row.email,
-      submittedData: row.submitted_data
-    }));
+    const offerIds = [...new Set(result.rows.map(row => row.offer_id).filter(Boolean))];
+    
+    let offerDetails: Record<string, any> = {};
+    const everflowApiKey = process.env.EVERFLOW_API_KEY;
+    
+    if (everflowApiKey && offerIds.length > 0) {
+      try {
+        console.log(`Fetching details for ${offerIds.length} offers from Everflow...`);
+        offerDetails = await getMultipleOffers(offerIds, everflowApiKey);
+        console.log('Successfully fetched offer details from Everflow');
+      } catch (error) {
+        console.error('Error fetching offer details from Everflow:', error);
+      }
+    }
+
+    const requests = result.rows.map(row => {
+      const offerId = row.offer_id || 'N/A';
+      const offerInfo = offerDetails[offerId];
+      
+      return {
+        id: row.id,
+        date: new Date(row.created_at).toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }),
+        company: row.company_name || 'N/A',
+        offerId: offerId,
+        offerName: offerInfo?.name || `Offer ${offerId}`,
+        offerDescription: offerInfo?.description || '',
+        offerPayout: offerInfo?.payout || null,
+        offerCurrency: offerInfo?.currency || 'USD',
+        type: row.creative_type || 'N/A',
+        priority: row.priority === 'high' ? 'High Priority' : 
+                  row.priority === 'medium' ? 'Moderate Priority' : 'Low Priority',
+        status: row.status,
+        publisherName: row.publisher_name,
+        email: row.email,
+        submittedData: row.submitted_data
+      };
+    });
 
     return NextResponse.json({ requests });
   } catch (error) {
