@@ -19,50 +19,23 @@ interface MetricData {
   changeType: 'increase' | 'decrease';
   icon: React.ComponentType<{ className?: string }>;
   color: string;
+  today?: number;
+  yesterday?: number;
+  currentMonth?: number;
+  lastMonth?: number;
 }
 
-const mockMetrics: MetricData[] = [
-  {
-    label: 'Total Assets',
-    value: '1263',
-    change: '+400 from yesterday',
-    changeType: 'increase',
-    icon: FileText,
-    color: 'blue'
-  },
-  {
-    label: 'New Asset Requests',
-    value: '201',
-    change: '+400 from yesterday',
-    changeType: 'increase',
-    icon: Clock,
-    color: 'orange'
-  },
-  {
-    label: 'Approved Asset Count',
-    value: '552',
-    change: '+400 from yesterday',
-    changeType: 'increase',
-    icon: CheckCircle,
-    color: 'green'
-  },
-  {
-    label: 'Rejected Assets',
-    value: '210',
-    change: '+400 from yesterday',
-    changeType: 'increase',
-    icon: XCircle,
-    color: 'red'
-  },
-  {
-    label: 'Pending Approvals',
-    value: '300',
-    change: '+400 from yesterday',
-    changeType: 'increase',
-    icon: Users,
-    color: 'purple'
-  }
-];
+interface MetricsResponse {
+  totalAssets: number;
+  newRequests: number;
+  approvedAssets: number;
+  rejectedAssets: number;
+  pendingAssets: number;
+  today: number;
+  yesterday: number;
+  currentMonth: number;
+  lastMonth: number;
+}
 
 const colorClasses = {
   blue: 'bg-blue-500',
@@ -108,19 +81,19 @@ function MetricCard({ metric }: MetricCardProps) {
           <div className="flex items-center text-green-600">
             <TrendingUp className="h-4 w-4 mr-1" />
             <span className="font-medium">Today</span>
-            <span className="ml-2 text-gray-500">400</span>
+            <span className="ml-2 text-gray-500">{metric.today || 0}</span>
           </div>
           <div className="flex items-center text-gray-600 mt-1">
             <span className="text-xs">Yesterday</span>
-            <span className="ml-2 text-xs">400</span>
+            <span className="ml-2 text-xs">{metric.yesterday || 0}</span>
           </div>
           <div className="flex items-center text-gray-600 mt-1">
             <span className="text-xs">Current Month</span>
-            <span className="ml-2 text-xs">25k</span>
+            <span className="ml-2 text-xs">{metric.currentMonth || 0}</span>
           </div>
           <div className="flex items-center text-gray-600 mt-1">
             <span className="text-xs">Last Month</span>
-            <span className="ml-2 text-xs">10.8k</span>
+            <span className="ml-2 text-xs">{metric.lastMonth || 0}</span>
           </div>
         </div>
       </div>
@@ -129,9 +102,123 @@ function MetricCard({ metric }: MetricCardProps) {
 }
 
 export function MetricsCards() {
+  const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/api/dashboard/metrics');
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data);
+        }
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
+                <div className="ml-5 w-0 flex-1">
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                  <div className="h-8 bg-gray-300 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="bg-white overflow-hidden shadow rounded-lg p-5 text-center">
+          <p className="text-gray-500">Failed to load metrics</p>
+        </div>
+      </div>
+    );
+  }
+
+  const metricsData: MetricData[] = [
+    {
+      label: 'Total Assets',
+      value: metrics.totalAssets.toString(),
+      change: 'All time',
+      changeType: 'increase',
+      icon: FileText,
+      color: 'blue',
+      today: metrics.today,
+      yesterday: metrics.yesterday,
+      currentMonth: metrics.currentMonth,
+      lastMonth: metrics.lastMonth
+    },
+    {
+      label: 'New Asset Requests',
+      value: metrics.newRequests.toString(),
+      change: 'Today',
+      changeType: 'increase',
+      icon: Clock,
+      color: 'orange',
+      today: metrics.today,
+      yesterday: metrics.yesterday,
+      currentMonth: metrics.currentMonth,
+      lastMonth: metrics.lastMonth
+    },
+    {
+      label: 'Approved Asset Count',
+      value: metrics.approvedAssets.toString(),
+      change: 'All time',
+      changeType: 'increase',
+      icon: CheckCircle,
+      color: 'green',
+      today: metrics.today,
+      yesterday: metrics.yesterday,
+      currentMonth: metrics.currentMonth,
+      lastMonth: metrics.lastMonth
+    },
+    {
+      label: 'Rejected Assets',
+      value: metrics.rejectedAssets.toString(),
+      change: 'All time',
+      changeType: 'increase',
+      icon: XCircle,
+      color: 'red',
+      today: metrics.today,
+      yesterday: metrics.yesterday,
+      currentMonth: metrics.currentMonth,
+      lastMonth: metrics.lastMonth
+    },
+    {
+      label: 'Pending Approvals',
+      value: metrics.pendingAssets.toString(),
+      change: 'All time',
+      changeType: 'increase',
+      icon: Users,
+      color: 'purple',
+      today: metrics.today,
+      yesterday: metrics.yesterday,
+      currentMonth: metrics.currentMonth,
+      lastMonth: metrics.lastMonth
+    }
+  ];
+
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-      {mockMetrics.map((metric, index) => (
+      {metricsData.map((metric, index) => (
         <MetricCard key={index} metric={metric} />
       ))}
     </div>
