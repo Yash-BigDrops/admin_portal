@@ -1,39 +1,40 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-export function middleware(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Get token from cookies or headers
-  const token = request.cookies.get('admin-token')?.value
-
-  // Public paths that don't require authentication
-  const publicPaths = ['/login', '/register']
-  const isPublicPath = publicPaths.includes(pathname)
-
-  // If accessing protected route without token, redirect to login
-  if (!token && !isPublicPath) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // If has token and accessing login page, redirect to dashboard
-  if (token && isPublicPath) {
+  
+  const publicRoutes = [
+    '/auth/signin',
+    '/auth/signup', 
+    '/auth/error',
+    '/api/auth',
+    '/_next',
+    '/favicon.ico'
+  ]
+  
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname.startsWith(route)
+  )
+  
+  const token = request.cookies.get('next-auth.session-token') || 
+                request.cookies.get('__Secure-next-auth.session-token')
+  
+  if (token && pathname.startsWith('/auth/signin')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
-
+  
+  if (!token && !isPublicRoute) {
+    const signInUrl = new URL('/auth/signin', request.url)
+    signInUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(signInUrl)
+  }
+  
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 }

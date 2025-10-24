@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+// import { can } from '@/lib/rbac' // Removed to avoid Edge Runtime issues;
 import {
   LayoutDashboard,
   Users,
@@ -24,6 +25,14 @@ interface NavigationItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   children?: NavigationItem[];
+  permission?: string;
+}
+
+interface User {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
 }
 
 const navigation: NavigationItem[] = [
@@ -31,63 +40,91 @@ const navigation: NavigationItem[] = [
     name: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    badge: 'New'
+    badge: 'New',
+    permission: 'view_analytics'
   },
   {
     name: 'Live Requests',
     href: '/requests',
     icon: FileText,
-    badge: '15'
+    badge: '15',
+    permission: 'manage_offers'
   },
   {
     name: 'Offers',
     href: '/offers',
     icon: Target,
+    permission: 'manage_offers'
   },
   {
     name: 'Completed Requests',
     href: '/completed',
     icon: UserCheck,
+    permission: 'manage_offers'
   },
   {
     name: 'Manage Advertisers',
     href: '/advertisers',
     icon: Users,
+    permission: 'manage_publishers'
   },
   {
     name: 'Manage Publishers',
     href: '/publishers',
     icon: Users,
+    permission: 'manage_publishers'
   },
   {
     name: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
+    permission: 'view_analytics'
   },
   {
     name: 'Appearance',
     href: '/appearance',
     icon: Folder,
+    permission: 'manage_settings'
   },
   {
     name: 'AI Settings',
     href: '/llm',
     icon: Brain,
+    permission: 'manage_settings'
   },
   {
     name: 'Pub Form Settings',
     href: '/form-builder',
     icon: Settings,
+    permission: 'manage_settings'
   },
 ];
 
 interface SidebarProps {
   className?: string;
+  user?: User;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, user }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Simple role-based filtering without database dependency
+  const filteredNavigation = navigation.filter(item => {
+    if (!item.permission) return true;
+    if (!user?.role) return false;
+    
+    // Simple role-based permissions without database lookup
+    const rolePermissions: Record<string, string[]> = {
+      super_admin: ['manage_users', 'manage_settings', 'view_analytics', 'manage_publishers', 'manage_offers'],
+      admin: ['manage_users', 'manage_settings', 'view_analytics', 'manage_publishers', 'manage_offers'],
+      manager: ['view_analytics', 'manage_publishers', 'manage_offers'],
+      editor: ['manage_offers', 'view_analytics'],
+      user: ['view_analytics']
+    };
+    
+    return rolePermissions[user.role]?.includes(item.permission) || false;
+  });
 
   return (
     <>
@@ -128,7 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Navigation */}
           <nav className="mt-8 flex-1 px-2 space-y-1">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = pathname === item.href || 
                              (item.children && item.children.some(child => pathname === child.href));
               
@@ -185,7 +222,7 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
                 <nav className="mt-5 px-2 space-y-1">
-                  {navigation.map((item) => (
+                  {filteredNavigation.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}

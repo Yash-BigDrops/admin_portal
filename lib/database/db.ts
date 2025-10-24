@@ -1,5 +1,7 @@
 import { Pool } from 'pg';
 
+export const runtime = 'nodejs'
+
 declare global {
   var __adminPortalPool__: Pool | undefined;
 }

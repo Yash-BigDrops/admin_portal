@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   Bell,
   Search,
@@ -12,19 +13,25 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface HeaderProps {
-  className?: string;
+interface User {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
 }
 
-export function Header({ className }: HeaderProps) {
+interface HeaderProps {
+  className?: string;
+  user?: User;
+}
+
+export function Header({ className, user }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      document.cookie = 'admin-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      router.push('/login');
+      await signOut({ callbackUrl: '/auth/signin' });
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -79,7 +86,7 @@ export function Header({ className }: HeaderProps) {
                   <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
                     <User className="h-5 w-5 text-indigo-600" />
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700">Super Admin</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">{user?.name || 'User'}</span>
                   <ChevronDown className="ml-1 h-4 w-4 text-gray-500" />
                 </button>
               </div>
