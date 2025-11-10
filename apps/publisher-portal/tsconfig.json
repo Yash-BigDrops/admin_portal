@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@repo/ui": ["../../packages/ui"],
+      "@repo/database": ["../../packages/database"],
+      "@repo/auth": ["../../packages/auth"],
+      "@repo/config": ["../../packages/config"],
+      "@repo/types": ["../../packages/types"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+

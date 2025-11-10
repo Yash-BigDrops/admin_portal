@@ -1,14 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/database/db';
 import { getMultipleOffers } from '@/lib/everflow';
+import { rateLimitMiddleware } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResponse = rateLimitMiddleware(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const syncedOnly = searchParams.get('synced') === '1';
+    const searchQuery = searchParams.get('q') || '';
+    const statusFilter = searchParams.get('status') || '';
+    const priorityFilter = searchParams.get('priority') || '';
+    const fromDate = searchParams.get('from') || '';
+    const toDate = searchParams.get('to') || '';
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortOrder = searchParams.get('sortOrder') || 'DESC';
 
     const pool = getPool();
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (syncedOnly) {
+      conditions.push("(submitted_data ? 'original_id' OR submitted_data ? 'migrated_at')");
+    }
+
+    if (searchQuery) {
+      conditions.push(`(
+        publisher_name ILIKE $${paramIndex} OR
+        company_name ILIKE $${paramIndex} OR
+        email ILIKE $${paramIndex} OR
+        offer_id ILIKE $${paramIndex}
+      )`);
+      params.push(`%${searchQuery}%`);
+      paramIndex++;
+    }
+
+    if (statusFilter) {
+      conditions.push(`status = $${paramIndex}`);
+      params.push(statusFilter);
+      paramIndex++;
+    }
+
+    if (priorityFilter) {
+      conditions.push(`priority = $${paramIndex}`);
+      params.push(priorityFilter);
+      paramIndex++;
+    }
+
+    if (fromDate) {
+      conditions.push(`created_at >= $${paramIndex}`);
+      params.push(fromDate);
+      paramIndex++;
+    }
+
+    if (toDate) {
+      conditions.push(`created_at <= $${paramIndex}`);
+      params.push(toDate);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
+
+    const validSortColumns = ['created_at', 'priority', 'status', 'publisher_name', 'company_name'];
+    const validSortOrder = ['ASC', 'DESC'];
+    const safeSortBy = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
+    const safeSortOrder = validSortOrder.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+
+    params.push(limit, offset);
 
     const result = await pool.query(`
       SELECT 
@@ -21,11 +88,20 @@ export async function GET(request: NextRequest) {
         priority,
         status,
         submitted_data,
-        created_at
+        admin_notes,
+        created_at,
+        updated_at
       FROM publisher_requests
-      ORDER BY created_at DESC
-      LIMIT $1 OFFSET $2
-    `, [limit, offset]);
+      ${whereClause}
+      ORDER BY ${safeSortBy} ${safeSortOrder}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, params);
+
+    const countResult = await pool.query(`
+      SELECT COUNT(*) as total
+      FROM publisher_requests
+      ${whereClause}
+    `, params.slice(0, -2));
 
     const offerIds = [...new Set(result.rows.map(row => row.offer_id).filter(Boolean))];
     
@@ -102,7 +178,12 @@ export async function GET(request: NextRequest) {
       return requestData;
     });
 
-    return NextResponse.json({ requests });
+    return NextResponse.json({ 
+      requests,
+      total: parseInt(countResult.rows[0].total),
+      limit,
+      offset
+    });
   } catch (error) {
     console.error('Error fetching requests:', error);
     return NextResponse.json({ error: 'Failed to fetch requests' }, { status: 500 });

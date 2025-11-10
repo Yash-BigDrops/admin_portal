@@ -1,7 +1,5 @@
 export const API_ENDPOINTS = {
-  // Authentication
-  LOGIN: '/api/auth/login',
-  LOGOUT: '/api/auth/logout',
+  // Authentication (handled by NextAuth at /api/auth/[...nextauth])
   REGISTER: '/api/auth/register',
   VERIFY_OTP: '/api/auth/verify-otp',
   REFRESH_TOKEN: '/api/auth/refresh',

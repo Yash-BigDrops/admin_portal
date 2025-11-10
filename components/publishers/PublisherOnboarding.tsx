@@ -61,9 +61,13 @@ export default function PublisherOnboarding() {
     city: '',
     state: '',
     zipCode: '',
-    country: ''
+    country: '',
+    offerId: '',
+    creativeType: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const { mutate } = usePublishers()
 
   const handleInputChange = (field: string, value: string) => {
@@ -84,14 +88,56 @@ export default function PublisherOnboarding() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
+    setError(null)
+    setSuccess(false)
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Map form data to API schema
+      const apiPayload = {
+        publisherName: formData.contactName || formData.companyName,
+        email: formData.email,
+        companyName: formData.companyName,
+        telegramId: formData.phone || null,
+        offerId: formData.offerId || 'pending-assignment',
+        creativeType: formData.creativeType || formData.businessType || 'other',
+        priority: 'medium' as const,
+        additionalNotes: formData.description,
+        // Include all extra form fields in the payload (passthrough allows this)
+        phone: formData.phone,
+        website: formData.website,
+        businessType: formData.businessType,
+        monthlyTraffic: formData.monthlyTraffic,
+        experience: formData.experience,
+        taxId: formData.taxId,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+      }
+
+      const res = await fetch('/api/publishers/onboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiPayload),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Submission failed')
+      }
+
+      setSuccess(true)
       
-      // Update publishers list
-      mutate()
+      // Update publishers list if using SWR/React Query
+      if (mutate) {
+        mutate()
+      }
       
-      // Reset form
+      // Reset form after successful submission
       setFormData({
         companyName: '',
         contactName: '',
@@ -107,11 +153,14 @@ export default function PublisherOnboarding() {
         city: '',
         state: '',
         zipCode: '',
-        country: ''
+        country: '',
+        offerId: '',
+        creativeType: ''
       })
       setCurrentStep(0)
-    } catch (error) {
-      console.error('Error submitting application:', error)
+    } catch (err: any) {
+      console.error('Error submitting application:', err)
+      setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -181,6 +230,32 @@ export default function PublisherOnboarding() {
                     <SelectItem value="influencer">Influencer</SelectItem>
                     <SelectItem value="publisher">Publisher</SelectItem>
                     <SelectItem value="agency">Marketing Agency</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="offerId">Offer ID *</Label>
+                <Input
+                  id="offerId"
+                  value={formData.offerId}
+                  onChange={(e) => handleInputChange('offerId', e.target.value)}
+                  placeholder="Enter offer ID"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="creativeType">Creative Type *</Label>
+                <Select value={formData.creativeType} onValueChange={(value) => handleInputChange('creativeType', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select creative type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="banner">Banner</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="native">Native</SelectItem>
+                    <SelectItem value="popup">Popup</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -375,6 +450,20 @@ export default function PublisherOnboarding() {
 
           {/* Step Content */}
           {renderStepContent()}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 text-green-600 rounded-md text-sm">
+              Application submitted successfully! We'll review your request and get back to you soon.
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">

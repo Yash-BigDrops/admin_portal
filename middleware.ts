@@ -17,8 +17,11 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith(route)
   )
   
-  const token = request.cookies.get('next-auth.session-token') || 
-                request.cookies.get('__Secure-next-auth.session-token')
+  const token =
+    request.cookies.get("authjs.session-token") ||
+    request.cookies.get("__Secure-authjs.session-token") ||
+    request.cookies.get("next-auth.session-token") ||
+    request.cookies.get("__Secure-next-auth.session-token")
   
   if (token && pathname.startsWith('/auth/signin')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))

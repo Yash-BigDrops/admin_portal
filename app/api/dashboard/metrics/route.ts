@@ -1,8 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/database/db';
+import { rateLimitMiddleware } from '@/lib/rate-limit';
+import * as Sentry from '@sentry/nextjs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResponse = rateLimitMiddleware(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
+  // Set Sentry context
+  Sentry.setTag("module", "dashboard");
+  Sentry.setTag("route", "/api/dashboard/metrics");
+  Sentry.setContext("metrics_query", {
+    timestamp: new Date().toISOString(),
+    userAgent: request.headers.get('user-agent')
+  });
+
+  const startTime = Date.now();
   try {
+    console.log('📊 Metrics query started');
     const pool = getPool();
 
     const now = new Date();
@@ -39,17 +55,6 @@ export async function GET() {
 
     const timeData = timeBasedCounts.rows[0];
 
-    console.log('Timezone Debug Info:', {
-      todayStart: todayStart.toISOString(),
-      todayEnd: todayEnd.toISOString(),
-      yesterdayStart: yesterdayStart.toISOString(),
-      yesterdayEnd: yesterdayEnd.toISOString(),
-      currentMonthStart: currentMonthStart.toISOString(),
-      currentMonthEnd: currentMonthEnd.toISOString(),
-      lastMonthStart: lastMonthStart.toISOString(),
-      lastMonthEnd: lastMonthEnd.toISOString()
-    });
-
     const metrics = {
       totalAssets: parseInt(totalAssets.rows[0].count),
       newRequests: parseInt(newRequests.rows[0].count),
@@ -62,9 +67,26 @@ export async function GET() {
       lastMonth: parseInt(timeData.count_last_month)
     };
 
+    const duration = Date.now() - startTime;
+    console.log(`📊 Metrics query completed in ${duration}ms`);
+
     return NextResponse.json(metrics);
   } catch (error) {
-    console.error('Error fetching metrics:', error);
+    const duration = Date.now() - startTime;
+    console.error(`📊 Metrics query failed after ${duration}ms:`, error);
+    
+    // Report error to Sentry
+    Sentry.captureException(error, {
+      tags: {
+        endpoint: 'metrics',
+        duration: duration
+      },
+      extra: {
+        requestUrl: request.url,
+        userAgent: request.headers.get('user-agent')
+      }
+    });
+    
     return NextResponse.json({ error: 'Failed to fetch metrics' }, { status: 500 });
   }
 }

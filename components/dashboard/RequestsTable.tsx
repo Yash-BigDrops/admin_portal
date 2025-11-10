@@ -42,13 +42,15 @@ export function RequestsTable() {
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [syncedOnly, setSyncedOnly] = useState(true);
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         console.log('Fetching requests from API...');
         const limit = showAll ? 100 : 2; 
-        const response = await fetch(`/api/dashboard/requests?limit=${limit}`);
+        const syncedParam = syncedOnly ? '&synced=1' : '';
+        const response = await fetch(`/api/dashboard/requests?limit=${limit}${syncedParam}`);
         if (response.ok) {
           const data: RequestsResponse = await response.json();
           console.log('API Response:', data);
@@ -65,7 +67,7 @@ export function RequestsTable() {
     };
 
     fetchRequests();
-  }, [showAll]);
+  }, [showAll, syncedOnly]);
 
 
   const handleApprovalClick = (request: RequestData, action: 'approve' | 'reject') => {
@@ -138,12 +140,23 @@ export function RequestsTable() {
               Incoming Publisher Requests
             </h3>
           </div>
-          <button 
-            onClick={handleViewAll}
-            className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30"
-          >
-            View All
-          </button>
+          <div className="flex items-center space-x-3">
+            <label className="flex items-center space-x-2 text-white text-sm">
+              <input
+                type="checkbox"
+                checked={syncedOnly}
+                onChange={(e) => setSyncedOnly(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span>Synced only</span>
+            </label>
+            <button 
+              onClick={handleViewAll}
+              className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30"
+            >
+              View All
+            </button>
+          </div>
         </div>
       </div>
 
