@@ -4,4 +4,5 @@ export * from './rbac'
 export { PERMISSIONS } from './rbac'
 export type { RequirePermission } from './require-auth'
 export { getAdminSession } from './get-admin-session'
+export { handlers, auth, signIn, signOut } from './auth'
 
