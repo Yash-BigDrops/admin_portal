@@ -36,19 +36,19 @@ export async function initializeDatabase() {
   const pool = getPool();
   
   try {
-    console.log('🔄 Initializing Admin Portal database...');
+    console.log(' Initializing Admin Portal database...');
     
     // Test connection
     await pool.query('SELECT NOW()');
-    console.log('✅ Database connection successful');
+    console.log(' Database connection successful');
 
     // Create tables
     await createTables(pool);
-    console.log('✅ Database tables initialized');
+    console.log(' Database tables initialized');
 
     return true;
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
+    console.error(' Database initialization failed:', error);
     throw error;
   }
 }
@@ -185,5 +185,5 @@ async function createTables(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
   `);
 
-  console.log('✅ All database tables and indexes created successfully');
+  console.log(' All database tables and indexes created successfully');
 }

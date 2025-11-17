@@ -28,23 +28,23 @@ export async function GET(request: NextRequest) {
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
 
-    const offerIds = [...new Set(result.rows.map(row => row.offer_id).filter(Boolean))];
+    const offerIds: string[] = [...new Set(result.rows.map((row: any) => row.offer_id).filter(Boolean))] as string[];
     
         let offerDetails: Record<string, { name: string; description: string; payout: number; currency: string; advertiserId?: string; advertiserName?: string }> = {};
-        const everflowApiKey = process.env.EVERFLOW_API_KEY;
+        const everflowApiKey: string | undefined = process.env.EVERFLOW_API_KEY;
         
         if (everflowApiKey && offerIds.length > 0) {
           try {
-            console.log(`📡 Attempting to fetch details for ${offerIds.length} offers from Everflow...`);
+            console.log(` Attempting to fetch details for ${offerIds.length} offers from Everflow...`);
             offerDetails = await getMultipleOffers(offerIds, everflowApiKey);
-            console.log('✅ Successfully fetched offer details from Everflow');
-          } catch (error) {
-            console.error('❌ Error fetching offer details from Everflow, using fallback:', error);
+            console.log(' Successfully fetched offer details from Everflow');
+          } catch (error: unknown) {
+            console.error(' Error fetching offer details from Everflow, using fallback:', error);
             offerDetails = {};
           }
         } else {
-          console.log('⚠️ Using fallback offer names - no API key or no offer IDs');
-          offerIds.forEach(offerId => {
+          console.log(' Using fallback offer names - no API key or no offer IDs');
+          offerIds.forEach((offerId: string) => {
             offerDetails[offerId] = {
               name: `Offer ${offerId}`,
               description: `Description for Offer ${offerId}`,
@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
           });
         }
 
-    const responses = result.rows.map(row => {
+    const responses = result.rows.map((row: any) => {
       const offerId = row.offer_id || 'N/A';
-      const offerInfo = offerDetails[offerId];
+      const offerInfo = offerDetails[offerId as string];
       
           return {
             id: row.id,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ responses });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching advertiser responses:', error);
     return NextResponse.json({ error: 'Failed to fetch advertiser responses' }, { status: 500 });
   }

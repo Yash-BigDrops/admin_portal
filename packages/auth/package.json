@@ -14,8 +14,8 @@
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "next-auth": "^5.0.0-beta.29",
-    "@repo/database": "*",
-    "@repo/types": "*"
+    "@repo/database": "workspace:*",
+    "@repo/types": "workspace:*"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

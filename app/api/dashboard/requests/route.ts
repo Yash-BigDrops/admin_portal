@@ -103,29 +103,29 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `, params.slice(0, -2));
 
-    const offerIds = [...new Set(result.rows.map(row => row.offer_id).filter(Boolean))];
+    const offerIds: string[] = [...new Set(result.rows.map((row: any) => row.offer_id).filter(Boolean))] as string[];
     
         let offerDetails: Record<string, { name: string; description: string; payout: number; currency: string; advertiserId?: string; advertiserName?: string }> = {};
-        const everflowApiKey = process.env.EVERFLOW_API_KEY;
+        const everflowApiKey: string | undefined = process.env.EVERFLOW_API_KEY;
         
-        console.log('🔍 Debug Info:');
+        console.log(' Debug Info:');
         console.log('- EVERFLOW_API_KEY exists:', !!everflowApiKey);
         console.log('- Offer IDs found:', offerIds);
         console.log('- Number of offers to fetch:', offerIds.length);
         
         if (everflowApiKey && offerIds.length > 0) {
           try {
-            console.log(`📡 Attempting to fetch details for ${offerIds.length} offers from Everflow...`);
+            console.log(` Attempting to fetch details for ${offerIds.length} offers from Everflow...`);
             offerDetails = await getMultipleOffers(offerIds, everflowApiKey);
-            console.log('✅ Successfully fetched offer details from Everflow');
-            console.log('📊 Offer details received:', Object.keys(offerDetails).length, 'offers');
-          } catch (error) {
-            console.error('❌ Error fetching offer details from Everflow, using fallback:', error);
+            console.log(' Successfully fetched offer details from Everflow');
+            console.log(' Offer details received:', Object.keys(offerDetails).length, 'offers');
+          } catch (error: unknown) {
+            console.error(' Error fetching offer details from Everflow, using fallback:', error);
             // Fallback will be handled by getMultipleOffers function
             offerDetails = {};
           }
         } else {
-          console.log('⚠️ Using fallback offer names - no API key or no offer IDs');
+          console.log(' Using fallback offer names - no API key or no offer IDs');
           // Use fallback mapping
           offerIds.forEach(offerId => {
             offerDetails[offerId] = {
@@ -139,9 +139,9 @@ export async function GET(request: NextRequest) {
           });
         }
 
-    const requests = result.rows.map(row => {
+    const requests = result.rows.map((row: any) => {
       const offerId = row.offer_id || 'N/A';
-      const offerInfo = offerDetails[offerId];
+      const offerInfo = offerDetails[offerId as string];
       
         const requestData = {
           id: row.id,
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
       
       // Debug logging for first few requests
       if (row.id === result.rows[0]?.id) {
-        console.log('🔍 First request debug:');
+        console.log(' First request debug:');
         console.log('- Offer ID:', offerId);
         console.log('- Offer Info from Everflow:', offerInfo);
         console.log('- Final offer name:', requestData.offerName);
@@ -180,11 +180,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
       requests,
-      total: parseInt(countResult.rows[0].total),
+      total: parseInt(countResult.rows[0]?.total || '0', 10),
       limit,
       offset
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching requests:', error);
     return NextResponse.json({ error: 'Failed to fetch requests' }, { status: 500 });
   }

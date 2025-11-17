@@ -1,3 +1,5 @@
+'use client'
+
 import { Suspense } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui'
 import { Button } from '@repo/ui'

@@ -36,7 +36,7 @@ export async function GET() {
       accountsSchema: accountsSchema.rows
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Check tables error:', error);
     return NextResponse.json(
       { 

@@ -18,7 +18,7 @@ export async function GET() {
     try {
       nextAuthImport = await import('next-auth');
       console.log('NextAuth import successful');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('NextAuth import error:', error);
       return NextResponse.json({
         success: false,
@@ -37,7 +37,7 @@ export async function GET() {
         providers: []
       });
       console.log('NextAuth instance created successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('NextAuth instance creation error:', error);
       return NextResponse.json({
         success: false,
@@ -53,7 +53,7 @@ export async function GET() {
       message: 'NextAuth.js debug completed'
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Debug error:', error);
     return NextResponse.json(
       { 

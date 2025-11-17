@@ -110,7 +110,33 @@ export function MetricsCards() {
         const response = await fetch('/api/dashboard/metrics');
         if (response.ok) {
           const data = await response.json();
-          setMetrics(data);
+          // Transform API response to match component expectations
+          if (data.metrics) {
+            setMetrics({
+              totalAssets: data.metrics.total || 0,
+              newRequests: data.metrics.pending || 0,
+              approvedAssets: data.metrics.approved || 0,
+              rejectedAssets: data.metrics.rejected || 0,
+              pendingAssets: data.metrics.pending || 0,
+              today: data.metrics.pending || 0, // Use pending as today's new requests
+              yesterday: 0,
+              currentMonth: data.metrics.total || 0,
+              lastMonth: 0
+            });
+          } else {
+            // Fallback if structure is different
+            setMetrics({
+              totalAssets: data.totalAssets || 0,
+              newRequests: data.newRequests || 0,
+              approvedAssets: data.approvedAssets || 0,
+              rejectedAssets: data.rejectedAssets || 0,
+              pendingAssets: data.pendingAssets || 0,
+              today: data.today || 0,
+              yesterday: data.yesterday || 0,
+              currentMonth: data.currentMonth || 0,
+              lastMonth: data.lastMonth || 0
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching metrics:', error);
@@ -152,66 +178,74 @@ export function MetricsCards() {
     );
   }
 
+  // Ensure all values are numbers before calling toString
+  const safeToString = (value: number | undefined | null): string => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '0';
+    }
+    return value.toString();
+  };
+
   const metricsData: MetricData[] = [
     {
       label: 'Total Assets',
-      value: metrics.totalAssets.toString(),
+      value: safeToString(metrics.totalAssets),
       change: 'All time',
       changeType: 'increase',
       icon: FileText,
       color: 'blue',
-      today: metrics.today,
-      yesterday: metrics.yesterday,
-      currentMonth: metrics.currentMonth,
-      lastMonth: metrics.lastMonth
+      today: metrics.today ?? 0,
+      yesterday: metrics.yesterday ?? 0,
+      currentMonth: metrics.currentMonth ?? 0,
+      lastMonth: metrics.lastMonth ?? 0
     },
     {
       label: 'New Asset Requests',
-      value: metrics.newRequests.toString(),
+      value: safeToString(metrics.newRequests),
       change: 'Today',
       changeType: 'increase',
       icon: Clock,
       color: 'orange',
-      today: metrics.today,
-      yesterday: metrics.yesterday,
-      currentMonth: metrics.currentMonth,
-      lastMonth: metrics.lastMonth
+      today: metrics.today ?? 0,
+      yesterday: metrics.yesterday ?? 0,
+      currentMonth: metrics.currentMonth ?? 0,
+      lastMonth: metrics.lastMonth ?? 0
     },
     {
       label: 'Approved Asset Count',
-      value: metrics.approvedAssets.toString(),
+      value: safeToString(metrics.approvedAssets),
       change: 'All time',
       changeType: 'increase',
       icon: CheckCircle,
       color: 'green',
-      today: metrics.today,
-      yesterday: metrics.yesterday,
-      currentMonth: metrics.currentMonth,
-      lastMonth: metrics.lastMonth
+      today: metrics.today ?? 0,
+      yesterday: metrics.yesterday ?? 0,
+      currentMonth: metrics.currentMonth ?? 0,
+      lastMonth: metrics.lastMonth ?? 0
     },
     {
       label: 'Rejected Assets',
-      value: metrics.rejectedAssets.toString(),
+      value: safeToString(metrics.rejectedAssets),
       change: 'All time',
       changeType: 'increase',
       icon: XCircle,
       color: 'red',
-      today: metrics.today,
-      yesterday: metrics.yesterday,
-      currentMonth: metrics.currentMonth,
-      lastMonth: metrics.lastMonth
+      today: metrics.today ?? 0,
+      yesterday: metrics.yesterday ?? 0,
+      currentMonth: metrics.currentMonth ?? 0,
+      lastMonth: metrics.lastMonth ?? 0
     },
     {
       label: 'Pending Approvals',
-      value: metrics.pendingAssets.toString(),
+      value: safeToString(metrics.pendingAssets),
       change: 'All time',
       changeType: 'increase',
       icon: Users,
       color: 'purple',
-      today: metrics.today,
-      yesterday: metrics.yesterday,
-      currentMonth: metrics.currentMonth,
-      lastMonth: metrics.lastMonth
+      today: metrics.today ?? 0,
+      yesterday: metrics.yesterday ?? 0,
+      currentMonth: metrics.currentMonth ?? 0,
+      lastMonth: metrics.lastMonth ?? 0
     }
   ];
 

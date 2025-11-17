@@ -22,7 +22,10 @@ export function getPool(): Pool {
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-    ssl: process.env.NODE_ENV === 'production'
+    // Supabase requires SSL for all connections
+    ssl: url.includes('supabase.co') || url.includes('neon.tech')
+      ? { rejectUnauthorized: false }
+      : process.env.NODE_ENV === 'production'
       ? { rejectUnauthorized: false }
       : false,
   });

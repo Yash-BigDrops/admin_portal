@@ -57,16 +57,16 @@ export async function POST() {
         requests: requestsResult.rows,
         advertiser_responses: advertiserResponsesResult.rows,
         metrics: {
-          total_assets: parseInt(totalAssets.rows[0].count),
-          new_requests: parseInt(newRequests.rows[0].count),
-          approved_assets: parseInt(approvedAssets.rows[0].count),
-          rejected_assets: parseInt(rejectedAssets.rows[0].count),
-          pending_assets: parseInt(pendingAssets.rows[0].count)
+          total_assets: parseInt(totalAssets.rows[0]?.count || '0', 10),
+          new_requests: parseInt(newRequests.rows[0]?.count || '0', 10),
+          approved_assets: parseInt(approvedAssets.rows[0]?.count || '0', 10),
+          rejected_assets: parseInt(rejectedAssets.rows[0]?.count || '0', 10),
+          pending_assets: parseInt(pendingAssets.rows[0]?.count || '0', 10)
         }
       }
     });
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Refresh dashboard error:', error);
     return NextResponse.json(
       { 

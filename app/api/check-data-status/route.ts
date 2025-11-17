@@ -26,14 +26,14 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       admin_database: {
-        publisher_requests_count: parseInt(adminRequests.rows[0].count),
-        users_count: parseInt(adminUsers.rows[0].count),
+        publisher_requests_count: parseInt(adminRequests.rows[0]?.count || '0', 10),
+        users_count: parseInt(adminUsers.rows[0]?.count || '0', 10),
         sample_requests: sampleRequests.rows
       },
       message: 'Data status checked successfully'
     });
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Check data status error:', error);
     return NextResponse.json(
       { 

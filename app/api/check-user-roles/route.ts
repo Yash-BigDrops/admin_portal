@@ -47,14 +47,14 @@ export async function GET() {
       success: true,
       userRolesSchema: userRolesSchema.rows,
       counts: {
-        users: parseInt(usersCount.rows[0].count),
-        roles: parseInt(rolesCount.rows[0].count),
-        userRoles: parseInt(userRolesCount.rows[0].count)
+        users: parseInt(usersCount.rows[0]?.count || '0', 10),
+        roles: parseInt(rolesCount.rows[0]?.count || '0', 10),
+        userRoles: parseInt(userRolesCount.rows[0]?.count || '0', 10)
       },
       sampleUser: sampleUser.rows[0] || null
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Check user_roles error:', error);
     return NextResponse.json(
       { 

@@ -57,9 +57,13 @@ export async function POST(request: NextRequest) {
       createdAt
     ]);
 
+    if (!result.rows[0]) {
+      throw new Error('Failed to insert submission');
+    }
+
     return NextResponse.json({ success: true, submissionId: result.rows[0].id });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Failed to process submission' }, { status: 500 });
   }

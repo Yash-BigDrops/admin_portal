@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
     return NextResponse.json(data)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Everflow analytics API error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch analytics data' },

@@ -5,9 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     // Simulate an error for testing
     throw new Error('Test API error for Sentry verification');
-  } catch (error) {
+  } catch (error: unknown) {
     // Report to Sentry
-    Sentry.captureException(error, {
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
       tags: {
         endpoint: 'test-error',
         test: true
