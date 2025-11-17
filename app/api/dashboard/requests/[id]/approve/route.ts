@@ -100,7 +100,7 @@ export async function POST(
         updatedAt: row.updated_at,
       },
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Approval API error:', error)
     if (error instanceof z.ZodError) {
       return badRequest('Validation error', { details: error.errors })

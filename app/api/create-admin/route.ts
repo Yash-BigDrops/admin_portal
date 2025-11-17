@@ -42,7 +42,7 @@ export async function POST() {
       user: result.rows[0]
     })
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating admin user:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to create admin user' },

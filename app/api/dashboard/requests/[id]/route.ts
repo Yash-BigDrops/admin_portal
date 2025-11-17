@@ -68,7 +68,7 @@ export async function GET(
         updatedAt: row.updated_at,
       },
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Get request API error:', error)
     return serverError('Failed to fetch request')
   }

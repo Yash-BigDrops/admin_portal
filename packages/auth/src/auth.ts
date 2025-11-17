@@ -5,6 +5,7 @@ import { UserRole } from '@repo/types'
 import bcrypt from 'bcryptjs'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
   },
@@ -39,34 +40,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('[Auth] Missing credentials')
           return null
         }
 
-        const pool = getPool()
-        const result = await pool.query(
-          'SELECT * FROM users WHERE email = $1 AND is_active = true',
-          [credentials.email]
-        )
+        try {
+          const pool = getPool()
+          const result = await pool.query(
+            'SELECT * FROM users WHERE email = $1 AND is_active = true',
+            [credentials.email]
+          )
 
-        if (result.rows.length === 0) {
+          if (result.rows.length === 0) {
+            console.log('[Auth] User not found:', credentials.email)
+            return null
+          }
+
+          const user = result.rows[0]
+          const isValidPassword = await bcrypt.compare(
+            credentials.password as string,
+            user.password_hash
+          )
+
+          if (!isValidPassword) {
+            console.log('[Auth] Invalid password for:', credentials.email)
+            return null
+          }
+
+          console.log('[Auth] Login successful for:', credentials.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.first_name} ${user.last_name}`,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error('[Auth] Error during authorization:', error)
           return null
-        }
-
-        const user = result.rows[0]
-        const isValidPassword = await bcrypt.compare(
-          credentials.password as string,
-          user.password_hash
-        )
-
-        if (!isValidPassword) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: `${user.first_name} ${user.last_name}`,
-          role: user.role,
         }
       },
     }),

@@ -13,15 +13,22 @@ export default function RecentActivity() {
       <CardContent className="space-y-4">
         {items.length === 0 && <p className="text-sm text-muted-foreground">No synced activity yet.</p>}
         {items.map((it:any)=>(
-          <div key={it.id} className="flex items-start justify-between">
+          <div key={it.id || Math.random()} className="flex items-start justify-between">
             <div>
-              <div className="font-medium">{it.offerName} (#{it.offerId})</div>
+              <div className="font-medium">
+                {it.publisher_name || it.offerName || 'Unknown'} 
+                {it.offer_id && ` (#${it.offer_id})`}
+                {it.offerId && ` (#${it.offerId})`}
+              </div>
               <div className="text-sm text-muted-foreground">
-                {it.affiliateName} (#{it.affiliateId})
+                {it.email || it.affiliateName || 'No email'}
+                {it.affiliateId && ` (#${it.affiliateId})`}
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              {new Date(it.createdAt).toLocaleString()}
+              {it.created_at ? new Date(it.created_at).toLocaleString() : 
+               it.createdAt ? new Date(it.createdAt).toLocaleString() : 
+               'No date'}
             </div>
           </div>
         ))}

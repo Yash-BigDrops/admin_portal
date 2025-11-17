@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   const startTime = Date.now();
   try {
-    console.log('📋 Recent activity query started');
+    console.log(' Recent activity query started');
     const pool = getPool();
     const q = `
       SELECT 
@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     `;
     const { rows } = await pool.query(q);
     const duration = Date.now() - startTime;
-    console.log(`📋 Recent activity query completed in ${duration}ms, found ${rows.length} items`);
+    console.log(` Recent activity query completed in ${duration}ms, found ${rows.length} items`);
     return NextResponse.json({
-      items: rows.map(r => ({
+      items: rows.map((r: any) => ({
         id: r.id,
         offerId: r.offer_id,
         offerName: r.offer_name,
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
         createdAt: r.created_at
       }))
     });
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
-    console.error(`📋 Recent activity query failed after ${duration}ms:`, error);
+    console.error(` Recent activity query failed after ${duration}ms:`, error);
     return NextResponse.json({ error: "Failed to load recent activity" }, { status: 500 });
   }
 }

@@ -1,8 +1,13 @@
 import type { NextConfig } from 'next'
 import { withSentryConfig } from '@sentry/nextjs'
+import path from 'path'
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['pg'],
+  serverExternalPackages: ['pg', 'require-in-the-middle'],
+  turbopack: {
+    root: path.resolve(__dirname, '../../'),
+  } as any,
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       {

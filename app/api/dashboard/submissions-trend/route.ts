@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const startTime = Date.now();
   try {
-    console.log('📈 Submissions trend query started');
+    console.log(' Submissions trend query started');
     const pool = getPool();
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -52,11 +52,11 @@ export async function GET(request: NextRequest) {
     };
 
     const duration = Date.now() - startTime;
-    console.log(`📈 Submissions trend query completed in ${duration}ms`);
+    console.log(` Submissions trend query completed in ${duration}ms`);
     return NextResponse.json({ data, totals });
-  } catch (e) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
-    console.error(`📈 Submissions trend query failed after ${duration}ms:`, e);
+    console.error(` Submissions trend query failed after ${duration}ms:`, error);
     return NextResponse.json({ error: "Failed to load submissions trend" }, { status: 500 });
   }
 }

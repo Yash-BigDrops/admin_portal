@@ -56,8 +56,8 @@ export function RequestsTableEnhanced() {
   const [showDetailPanel, setShowDetailPanel] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [priorityFilter, setPriorityFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC')
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' })
@@ -67,8 +67,8 @@ export function RequestsTableEnhanced() {
     params.set('limit', '50')
     params.set('offset', '0')
     if (searchQuery) params.set('q', searchQuery)
-    if (statusFilter) params.set('status', statusFilter)
-    if (priorityFilter) params.set('priority', priorityFilter)
+    if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter)
+    if (priorityFilter && priorityFilter !== 'all') params.set('priority', priorityFilter)
     if (dateRange.from) params.set('from', dateRange.from)
     if (dateRange.to) params.set('to', dateRange.to)
     params.set('sortBy', sortBy)
@@ -173,14 +173,14 @@ export function RequestsTableEnhanced() {
 
   const clearFilters = () => {
     setSearchQuery('')
-    setStatusFilter('')
-    setPriorityFilter('')
+    setStatusFilter('all')
+    setPriorityFilter('all')
     setDateRange({ from: '', to: '' })
     setSortBy('created_at')
     setSortOrder('DESC')
   }
 
-  const hasActiveFilters = searchQuery || statusFilter || priorityFilter || dateRange.from || dateRange.to
+  const hasActiveFilters = searchQuery || (statusFilter && statusFilter !== 'all') || (priorityFilter && priorityFilter !== 'all') || dateRange.from || dateRange.to
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -210,7 +210,7 @@ export function RequestsTableEnhanced() {
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="admin_approved">Approved</SelectItem>
               <SelectItem value="admin_rejected">Rejected</SelectItem>
@@ -222,7 +222,7 @@ export function RequestsTableEnhanced() {
               <SelectValue placeholder="All Priorities" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Priorities</SelectItem>
+              <SelectItem value="all">All Priorities</SelectItem>
               <SelectItem value="high">High</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="low">Low</SelectItem>
@@ -244,7 +244,7 @@ export function RequestsTableEnhanced() {
                 {filter.label}
               </Button>
             ))}
-            {statusFilter === '' && (
+            {statusFilter === 'all' && (
               <Button
                 variant="outline"
                 size="sm"

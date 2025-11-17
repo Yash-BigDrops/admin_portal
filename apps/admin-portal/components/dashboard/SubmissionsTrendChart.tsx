@@ -11,8 +11,14 @@ const fetcher = (u: string) => fetch(u).then(r => r.json());
 export default function SubmissionsTrendChart() {
   const { data } = useSWR("/api/dashboard/submissions-trend", fetcher, { refreshInterval: 60_000 });
 
-  const chartData = data?.data ?? [];
-  const totals = data?.totals ?? { today: 0, yesterday: 0 };
+  // Transform data to match chart expectations
+  const chartData = (data?.data ?? []).map((item: any) => ({
+    hour: item.hour || item.date || '',
+    count: item.count || 0,
+    today: item.count || 0,
+    yesterday: 0 // Can be enhanced later
+  }));
+  const totals = data?.totals ?? { last24Hours: 0, today: 0, yesterday: 0 };
 
   return (
     <Card className="col-span-2">
@@ -25,8 +31,8 @@ export default function SubmissionsTrendChart() {
           </div>
         </div>
         <div className="mb-2 text-sm text-muted-foreground">
-          Today: <span className="font-medium">{totals.today}</span> ·
-          Yesterday: <span className="font-medium">{totals.yesterday}</span>
+          Last 24 Hours: <span className="font-medium">{totals.last24Hours ?? totals.today ?? 0}</span>
+          {totals.yesterday !== undefined && ` · Yesterday: ${totals.yesterday}`}
         </div>
       </CardHeader>
       <CardContent>
@@ -52,8 +58,7 @@ export default function SubmissionsTrendChart() {
                 <XAxis dataKey="hour" tickLine={false} axisLine={false}/>
                 <YAxis allowDecimals={false} tickLine={false} axisLine={false}/>
                 <Tooltip />
-                <Area type="monotone" dataKey="yesterday" stroke="#60a5fa" fill="url(#fillYesterday)" name="Yesterday"/>
-                <Area type="monotone" dataKey="today" stroke="#2563eb" fill="url(#fillToday)" name="Today"/>
+                <Area type="monotone" dataKey="count" stroke="#2563eb" fill="url(#fillToday)" name="Submissions"/>
               </AreaChart>
             </ResponsiveContainer>
           </TabsContent>

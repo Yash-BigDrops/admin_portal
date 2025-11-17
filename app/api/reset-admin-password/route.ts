@@ -31,7 +31,7 @@ export async function POST() {
       passwordHash: hashedPassword.substring(0, 20) + '...' // Show first 20 chars for debugging
     })
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error resetting admin password:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to reset admin password' },

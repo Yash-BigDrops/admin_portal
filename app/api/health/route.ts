@@ -16,7 +16,7 @@ export async function GET() {
       responseTimeMs: durationMs,
       timestamp: new Date().toISOString(),
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Healthcheck error:', error)
     return NextResponse.json(
       {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@repo/ui';
@@ -64,7 +64,7 @@ const navigation: NavigationItem[] = [
   },
   {
     name: 'Manage Advertisers',
-    href: '/advertisers',
+    href: '/manage_advertisers',
     icon: Users,
     permission: 'manage_publishers'
   },
@@ -107,7 +107,15 @@ interface SidebarProps {
 
 export function Sidebar({ className, user }: SidebarProps) {
   const pathname = usePathname();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const isAdvertisersPage = pathname === '/manage_advertisers';
+  const [isMobileOpen, setIsMobileOpen] = useState(isAdvertisersPage);
+
+  // Keep sidebar open on advertisers page
+  useEffect(() => {
+    if (isAdvertisersPage) {
+      setIsMobileOpen(true);
+    }
+  }, [isAdvertisersPage]);
 
   // Simple role-based filtering without database dependency
   const filteredNavigation = navigation.filter(item => {
@@ -128,21 +136,23 @@ export function Sidebar({ className, user }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden">
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-        >
-          <span className="sr-only">Open main menu</span>
-          {isMobileOpen ? (
-            <X className="block h-6 w-6" aria-hidden="true" />
-          ) : (
-            <Menu className="block h-6 w-6" aria-hidden="true" />
-          )}
-        </button>
-      </div>
+      {/* Mobile menu button - Hidden on advertisers page */}
+      {!isAdvertisersPage && (
+        <div className="lg:hidden">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
+          >
+            <span className="sr-only">Open main menu</span>
+            {isMobileOpen ? (
+              <X className="block h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="block h-6 w-6" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Desktop sidebar */}
       <div className={cn(
@@ -205,21 +215,24 @@ export function Sidebar({ className, user }: SidebarProps) {
         </div>
       </div>
 
-      {/* Mobile sidebar */}
-      {isMobileOpen && (
+      {/* Mobile sidebar - Always open on advertisers page */}
+      {(isMobileOpen || isAdvertisersPage) && (
         <div className="lg:hidden">
           <div className="fixed inset-0 flex z-40">
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
+            {!isAdvertisersPage && <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />}
             <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-              <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button
-                  type="button"
-                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  <X className="h-6 w-6 text-white" />
-                </button>
-              </div>
+              {!isAdvertisersPage && (
+                <div className="absolute top-0 right-0 -mr-12 pt-2">
+                  <button
+                    type="button"
+                    className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                    onClick={() => setIsMobileOpen(false)}
+                    aria-label="Close sidebar"
+                  >
+                    <X className="h-6 w-6 text-white" />
+                  </button>
+                </div>
+              )}
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
                 <nav className="mt-5 px-2 space-y-1">
                   {filteredNavigation.map((item) => (

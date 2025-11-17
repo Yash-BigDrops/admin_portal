@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     try {
       parsedData = JSON.parse(rawBody);
       console.log('Successfully parsed JSON:', parsedData);
-    } catch (parseError) {
+    } catch (parseError: unknown) {
       console.error('JSON parse failed:', parseError);
       return NextResponse.json({
         success: false,

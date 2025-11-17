@@ -1,5 +1,4 @@
 'use client'
-import { signIn, getCsrfToken, useSession } from 'next-auth/react'
 import { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@repo/ui'
@@ -10,52 +9,126 @@ import { Alert, AlertDescription } from '@repo/ui'
 
 function SignInForm() {
   const [email, setEmail] = useState('admin@bigdrops.com')
-  const [password, setPassword] = useState('admin123')
+  const [password, setPassword] = useState('AdminPortal@2025')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [csrfToken, setCsrfToken] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
-
+  
+  // Get CSRF token on mount
   useEffect(() => {
-    const getToken = async () => {
-      const token = await getCsrfToken()
-      setCsrfToken(token || '')
+    const getCsrfToken = async () => {
+      try {
+        const response = await fetch('/api/auth/csrf')
+        const data = await response.json()
+        setCsrfToken(data.csrfToken)
+      } catch (error) {
+        console.error('Failed to get CSRF token:', error)
+      }
     }
-    getToken()
+    getCsrfToken()
   }, [])
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.replace(callbackUrl)
-    }
-  }, [status, router, callbackUrl])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     
+    if (!csrfToken) {
+      setError('CSRF token not loaded. Please refresh the page.')
+      setLoading(false)
+      return
+    }
+    
     try {
       console.log('Attempting sign in with:', { email, password: '***' })
       
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false, // Don't use NextAuth's redirect
-      })
+      // Use NextAuth v5 signin endpoint with CSRF token
+      const formData = new URLSearchParams()
+      formData.append('email', email)
+      formData.append('password', password)
+      formData.append('redirect', 'false')
+      formData.append('json', 'true')
+      formData.append('csrfToken', csrfToken)
       
-      console.log('Sign in result:', result)
-      
-      if (result?.error) {
-        setError('Invalid credentials')
-      } else if (result?.ok) {
-        // Manual redirect after successful signin
-        router.replace(callbackUrl)
+      let response: Response | null = null
+      try {
+        response = await fetch('/api/auth/callback/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: formData,
+          redirect: 'manual', // Don't follow redirects automatically
+        })
+        
+        console.log('Response status:', response.status)
+        console.log('Response type:', response.type)
+        
+        // Check if it's a redirect (302) or success - both mean login worked
+        // Status 0 can occur with opaque redirects
+        if (response.status === 302 || response.status === 200 || response.status === 0) {
+          // Login successful - redirect immediately
+          console.log('✅ Login successful, redirecting to:', callbackUrl)
+          window.location.href = callbackUrl
+          return // Exit early - don't set loading to false, let redirect happen
+        }
+      } catch (fetchError) {
+        // If fetch itself fails, it might be a network error
+        console.error('Fetch error:', fetchError)
+        // But if login was successful on server, try redirect anyway
+        // Check if we got a response before the error
+        if (response && (response.status === 302 || response.status === 0)) {
+          console.log('✅ Login successful despite fetch error, redirecting')
+          window.location.href = callbackUrl
+          return
+        }
+        setError('Network error. Please check your connection and try again.')
+        setLoading(false)
+        return
       }
+      
+      // If no response, something went wrong
+      if (!response) {
+        setError('No response from server. Please try again.')
+        setLoading(false)
+        return
+      }
+      
+      // If we get here, login failed - handle error response
+      let errorMessage = 'Invalid credentials'
+      try {
+        // Try to read the response as text first
+        const text = await response.text()
+        console.log('Error response text:', text)
+        
+        // Try to parse as JSON
+        if (text) {
+          try {
+            const result = JSON.parse(text)
+            errorMessage = result.error || result.message || 'Invalid credentials'
+          } catch {
+            // Not JSON, check status code
+            if (response.status === 401 || response.status === 403) {
+              errorMessage = 'Invalid credentials'
+            } else if (response.status >= 500) {
+              errorMessage = 'Server error. Please try again.'
+            }
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError)
+        // If we can't parse, use status-based error
+        if (response.status === 401 || response.status === 403) {
+          errorMessage = 'Invalid credentials'
+        } else {
+          errorMessage = 'An error occurred during signin'
+        }
+      }
+      
+      setError(errorMessage)
     } catch (error) {
       console.error('Sign in error:', error)
       setError('An error occurred during signin')
@@ -64,24 +137,6 @@ function SignInForm() {
     }
   }
 
-  // Show loading if checking session
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
-      </div>
-    )
-  }
-  
-  // Don't show signin form if already authenticated
-  if (status === 'authenticated') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div>Redirecting to dashboard...</div>
-      </div>
-    )
-  }
-  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -93,28 +148,26 @@ function SignInForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="admin@bigdrops.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="admin@bigdrops.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+          
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -135,25 +188,6 @@ function SignInForm() {
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </Button>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-              
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => signIn('google', { callbackUrl })}
-                    disabled={loading}
-                  >
-                    Sign in with Google
-                  </Button>
             </form>
           </CardContent>
         </Card>

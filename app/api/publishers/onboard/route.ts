@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Onboarding API error:', error)
     if (error instanceof z.ZodError) {
       return badRequest('Validation error', { details: error.errors })

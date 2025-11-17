@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const startTime = Date.now();
   try {
-    console.log('📊 Metrics query started');
+    console.log(' Metrics query started');
     const pool = getPool();
 
     const now = new Date();
@@ -55,28 +55,32 @@ export async function GET(request: NextRequest) {
 
     const timeData = timeBasedCounts.rows[0];
 
+    if (!timeData) {
+      throw new Error('Failed to fetch time-based metrics');
+    }
+
     const metrics = {
-      totalAssets: parseInt(totalAssets.rows[0].count),
-      newRequests: parseInt(newRequests.rows[0].count),
-      approvedAssets: parseInt(approvedAssets.rows[0].count),
-      rejectedAssets: parseInt(rejectedAssets.rows[0].count),
-      pendingAssets: parseInt(pendingAssets.rows[0].count),
-      today: parseInt(timeData.count_today),
-      yesterday: parseInt(timeData.count_yesterday),
-      currentMonth: parseInt(timeData.count_current_month),
-      lastMonth: parseInt(timeData.count_last_month)
+      totalAssets: parseInt(totalAssets.rows[0]?.count || '0', 10),
+      newRequests: parseInt(newRequests.rows[0]?.count || '0', 10),
+      approvedAssets: parseInt(approvedAssets.rows[0]?.count || '0', 10),
+      rejectedAssets: parseInt(rejectedAssets.rows[0]?.count || '0', 10),
+      pendingAssets: parseInt(pendingAssets.rows[0]?.count || '0', 10),
+      today: parseInt(timeData.count_today || '0', 10),
+      yesterday: parseInt(timeData.count_yesterday || '0', 10),
+      currentMonth: parseInt(timeData.count_current_month || '0', 10),
+      lastMonth: parseInt(timeData.count_last_month || '0', 10)
     };
 
     const duration = Date.now() - startTime;
-    console.log(`📊 Metrics query completed in ${duration}ms`);
+    console.log(` Metrics query completed in ${duration}ms`);
 
     return NextResponse.json(metrics);
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
-    console.error(`📊 Metrics query failed after ${duration}ms:`, error);
+    console.error(` Metrics query failed after ${duration}ms:`, error);
     
     // Report error to Sentry
-    Sentry.captureException(error, {
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
       tags: {
         endpoint: 'metrics',
         duration: duration
