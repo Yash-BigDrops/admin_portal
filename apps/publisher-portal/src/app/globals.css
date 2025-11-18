@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    @apply border-border;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html, body {
+    @apply bg-background text-foreground;
+  }
+}

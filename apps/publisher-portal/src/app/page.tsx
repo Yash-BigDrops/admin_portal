@@ -1,0 +1,11 @@
+export default function HomePage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Publisher Portal</h1>
+        <p className="text-gray-600">Welcome to the Publisher Portal</p>
+      </div>
+    </div>
+  );
+}
+
