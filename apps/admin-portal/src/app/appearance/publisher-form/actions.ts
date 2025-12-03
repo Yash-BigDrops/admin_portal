@@ -18,20 +18,20 @@ export async function savePublisherFormConfigAction(
   }
 
   // 2) Validate structure and limits
-  const config = validatePublisherFormConfig(rawConfig);
+  const validatedConfig = validatePublisherFormConfig(rawConfig);
 
   // 3) Save to DB
-  await savePublisherFormConfig(config);
+  const savedConfig = await savePublisherFormConfig(validatedConfig);
 
   // 4) Audit trail
   await writeAudit(
     session.user?.email || "unknown",
     "publisher_form.config.updated",
     "publisher_form_config",
-    config.id,
+    savedConfig.id,
     {
-      formId: config.id,
-      sections: config.sections.length,
+      formId: savedConfig.id,
+      sections: savedConfig.sections.length,
     }
   );
 }

@@ -5,6 +5,8 @@ import {
 import Sidebar from "@/components/Sidebar";
 import { savePublisherFormConfigAction } from "./actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublisherFormAppearancePage() {
   const initialConfig = await getActivePublisherFormConfig();
 
